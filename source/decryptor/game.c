@@ -1453,7 +1453,7 @@ u32 ConvertSdToCia(u32 param)
         
         // CIA stub
         u32 stub_size = BuildCiaStubTmd(stub, tmd, tmd_size);
-        if (stub_size == 0) {
+        if ((stub_size == 0) || (stub_size > 0x4000)) {
             Debug("Failed building the CIA stub");
             continue;
         }
@@ -2151,6 +2151,7 @@ u32 DumpTwlGameCart(u32 param)
 
     memset (buff, 0x00, 0x8000);
 
+	Cart_Reset();
 
     NTR_CmdReadHeader (buff);
     if (buff[0] == 0x00) {
@@ -2198,8 +2199,7 @@ u32 DumpTwlGameCart(u32 param)
     
     if (isDSi) {
         // initialize cartridge
-        Cart_Init();
-        //Cart_GetID();
+        Cart_Reset();
         
         NTR_CmdReadHeader (dsibuff);
         

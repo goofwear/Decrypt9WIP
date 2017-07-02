@@ -34,10 +34,10 @@ ARCH	:=	-mthumb -mthumb-interwork -flto
 
 CFLAGS	:=	-g -Wall -Wextra -Wpedantic -Wno-main -O2\
 			-march=armv5te -mtune=arm946e-s -fomit-frame-pointer\
-			-ffast-math -std=c99\
+			-ffast-math -std=gnu11\
 			$(ARCH)
 
-CFLAGS	+=	$(INCLUDE) -DEXEC_$(EXEC_METHOD) -DARM9 -D_GNU_SOURCE
+CFLAGS	+=	$(INCLUDE) -DARM9 -D_GNU_SOURCE
 
 CFLAGS	+=	-DBUILD_NAME="\"$(TARGET) (`date +'%Y/%m/%d'`)\""
 
@@ -59,7 +59,7 @@ endif
 
 CXXFLAGS	:= $(CFLAGS) -fno-rtti -fno-exceptions
 
-ASFLAGS	:=	-g $(ARCH) -DEXEC_$(EXEC_METHOD)
+ASFLAGS	:=	-g $(ARCH)
 LDFLAGS	=	-T../link.ld -nostartfiles -g $(ARCH) -Wl,-Map,$(TARGET).map
 
 LIBS	:=
@@ -114,10 +114,10 @@ export INCLUDE	:=	$(foreach dir,$(INCLUDES),-I$(CURDIR)/$(dir)) \
 
 export LIBPATHS	:=	$(foreach dir,$(LIBDIRS),-L$(dir)/lib)
 
-.PHONY: common clean all gateway binary cakehax cakerop brahma release
+.PHONY: common clean all gateway firm binary cakehax cakerop brahma release
 
 #---------------------------------------------------------------------------------
-all: binary
+all: firm
 
 common:
 	@[ -d $(OUTPUT_D) ] || mkdir -p $(OUTPUT_D)
@@ -128,6 +128,9 @@ submodules:
 
 binary: common
 	@make --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile
+
+firm: binary
+	@firmtool build $(OUTPUT).firm -n 0x23F00000 -e 0 -D $(OUTPUT).elf -A 0x23F00000 -C NDMA -i
 
 gateway: binary
 	@cp resources/LauncherTemplate.dat $(OUTPUT_D)/Launcher.dat
@@ -153,6 +156,7 @@ brahma: submodules binary
 release:
 	@rm -fr $(BUILD) $(OUTPUT_D) $(RELEASE)
 	@make --no-print-directory binary
+	@-make --no-print-directory firm
 	@-make --no-print-directory gateway
 	@-make --no-print-directory cakerop
 	@-make --no-print-directory brahma
@@ -161,6 +165,7 @@ release:
 	@[ -d $(RELEASE)/scripts ] || mkdir -p $(RELEASE)/scripts
 	@-cp $(OUTPUT_D)/Launcher.dat $(RELEASE)
 	@cp $(OUTPUT).bin $(RELEASE)
+	@-cp $(OUTPUT).firm $(RELEASE)
 	@-cp $(OUTPUT).dat $(RELEASE)
 	@-cp $(OUTPUT).nds $(RELEASE)
 	@-cp $(OUTPUT).3dsx $(RELEASE)/$(TARGET)
